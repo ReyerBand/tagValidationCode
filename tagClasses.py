@@ -31,7 +31,7 @@ class TagManager:
         if self.idGranularity == "crystal":
             # for EB have ieta from -85 to 85, excluding ieta = 0, and iphi from 1 to 360
             # for EE have ix and iy from 1 to 100
-            self.detPartMap["EB"]  = ROOT.TH2D("EB", "Tag valus for EB", 171,-85.5,85.5,360,0.5,360.5)
+            self.detPartMap["EB"]  = ROOT.TH2D("EB", "Tag valus for EB", 360,0.5,360.5, 171,-85.5,85.5)
             self.detPartMap["EEp"] = ROOT.TH2D("EEp","Tag valus for EE+",100,0.5,100.5,100,0.5,100.5)
             self.detPartMap["EEm"] = ROOT.TH2D("EEm","Tag valus for EE-",100,0.5,100.5,100,0.5,100.5)
         elif self.idGranularity == "tower":
@@ -40,6 +40,7 @@ class TagManager:
             self.detPartMap["EB"]  = ROOT.TH2D("EB", "Tag valus for EB",34,-17,17,72,0.5,72.5)
         else:
             pass
+            logging.warning("Has to implement this granularity (not crystal nor tower)")
             # to be implemented
 
     def convertTxtIntoDict(self, txtfile):
@@ -63,3 +64,11 @@ class TagManager:
             return self.detPartMap[selectedPart]
         else:
             return self.detPartMap
+
+    def getMapEB(self):
+        return self.getHistograms(selectedPart="EB")
+    def getMapEEp(self):
+        return self.getHistograms(selectedPart="EEp")
+    def getMapEEm(self):
+        return self.getHistograms(selectedPart="EEm")
+

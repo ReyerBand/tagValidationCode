@@ -1,5 +1,5 @@
-
-#!/usr/bin/env python3                                                                                        
+#!/usr/bin/env python3
+ 
 from commonImport import *
 from tagClasses import TagManager
 
@@ -31,3 +31,17 @@ if __name__ == "__main__":
         shutil.copy(htmlpath, outdir)
 
     tgVal = TagManager(args)
+
+    mapEB = tgVal.getMapEB()
+    minz,maxz = getMinMaxHisto(mapEB, excludeEmpty=True, sumError=False)
+
+    adjustSettings_CMS_lumi() # just a dummy function to fix some settings in canvas later on
+    xsizeCanvas_EB = int(1200);
+    ysizeCanvas_EB = int(xsizeCanvas_EB * 171. / 360. + 0.1 * xsizeCanvas_EB);
+    cEB = ROOT.TCanvas("cEB", "", xsizeCanvas_EB, ysizeCanvas_EB) 
+
+
+    drawTH2(mapEB, "iphi", "ieta", "value in tag::%s,%s" % (minz,maxz),
+            canvasName="mapEB", outdir=outdir,
+            leftMargin=0.08, rightMargin=0.16,
+            nContours=101, palette=55, passCanvas=cEB, drawOption="COLZ0")

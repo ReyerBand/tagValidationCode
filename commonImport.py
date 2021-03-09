@@ -15,3 +15,6 @@ sys.argv = args
 ROOT.gROOT.SetBatch(True)
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from copy import *
+
+sys.path.append(os.getcwd() + "/plotUtils/")
+from utility import *

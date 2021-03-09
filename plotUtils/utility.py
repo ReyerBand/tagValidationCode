@@ -52,7 +52,7 @@ def getMinMaxHisto(h, excludeEmpty=True, sumError=True,
     # must check whether bin is underflow or overflow
     # therefore, the global bin is obtained as the number of bins +2, multiplied for each axis
 
-    # excludeEmpty = True exclude bins with content 0.0. Useful when a histogram is filled with values in, for example, [1,2] but hassome empty bins
+    # excludeEmpty = True exclude bins with content 0.0. Useful when a histogram is filled with values in, for example, [1,2] but has some empty bins
     # excludeMin/Max are used to select a range in which to look for maximum and minimum, useful to reject outliers, crazy or empty bins and so on
     # for histograms with non-negative values, excludeEmpty=True is equal to excludeMin==0.0
 
@@ -62,7 +62,7 @@ def getMinMaxHisto(h, excludeEmpty=True, sumError=True,
     # the better combination of options depends on dimension: for a TH1 is useful to visualize the error band in the plot range, while for a TH2 
     # only the bin content is interesting in the plot (the error is not reported with TH2::Draw, unless plotting it in a 3D space
 
-    # one might exploit excludeMin/Max to select a rage depending on the distribution on the histogram bin content
+    # one might exploit excludeMin/Max to select a range depending on the distribution on the histogram bin content
     # for example, one can pass excludeMin=h.GetMean()-2*h.GetStdDev() and excludeMax=h.GetMean()+2*h.GetStdDev() so to 
     # select a range of 2 sigma around the mean
 
@@ -329,25 +329,26 @@ def drawTH1(htmp,
 
 
 # function to draw 2D histograms, can also plot profile along X on top
-def drawCorrelationPlot(h2D_tmp,
-                        labelXtmp="xaxis", labelYtmp="yaxis", labelZtmp="zaxis",
-                        canvasName="default", plotLabel="", outdir="./",
-                        rebinFactorX=0,
-                        rebinFactorY=0,
-                        smoothPlot=False,
-                        drawProfileX=False,
-                        scaleToUnitArea=False,
-                        draw_both0_noLog1_onlyLog2=0,
-                        leftMargin=0.16,
-                        rightMargin=0.20,
-                        nContours=51,
-                        palette=55,
-                        canvasSize="700,625",
-                        passCanvas=None,
-                        bottomMargin=0.1,
-                        plotError=False, # plot values from GetBinError rather than GetBinContent
-                        lumi=None,
-                        drawOption = "colz"):
+def drawTH2(h2D_tmp,
+            labelXtmp="xaxis", labelYtmp="yaxis", labelZtmp="zaxis",
+            canvasName="default", plotLabel="", outdir="./",
+            rebinFactorX=0,
+            rebinFactorY=0,
+            smoothPlot=False,
+            drawProfileX=False,
+            scaleToUnitArea=False,
+            draw_both0_noLog1_onlyLog2=1,
+            leftMargin=0.16,
+            rightMargin=0.20,
+            nContours=51,
+            palette=55,
+            canvasSize="700,625",
+            passCanvas=None,
+            bottomMargin=0.1,
+            plotError=False, # plot values from GetBinError rather than GetBinContent
+            lumi=None,
+            drawOption = "colz",
+            skipCmsLumi=True):
 
 
     ROOT.TH1.SetDefaultSumw2()
@@ -428,12 +429,14 @@ def drawCorrelationPlot(h2D_tmp,
     h2DPlot.GetXaxis().SetTitleSize(0.05)
     h2DPlot.GetXaxis().SetLabelSize(0.04)
     h2DPlot.GetXaxis().SetTitleOffset(0.95) # 1.1 goes outside sometimes, maybe depends on root version or canvas width
+    h2DPlot.GetXaxis().SetTickLength(0.02)
     h2DPlot.GetYaxis().SetTitleSize(0.05)
     h2DPlot.GetYaxis().SetLabelSize(0.04)
-    h2DPlot.GetYaxis().SetTitleOffset(1.1)
+    h2DPlot.GetYaxis().SetTitleOffset(0.85)
+    h2DPlot.GetYaxis().SetTickLength(0.01)
     h2DPlot.GetZaxis().SetTitleSize(0.05)
     h2DPlot.GetZaxis().SetLabelSize(0.04)
-    h2DPlot.GetZaxis().SetTitleOffset(1.2)
+    h2DPlot.GetZaxis().SetTitleOffset(0.8)
 
     h2DPlot.GetZaxis().SetTitle(labelZ) 
     h2DPlot.Draw(drawOption)
@@ -454,18 +457,13 @@ def drawCorrelationPlot(h2D_tmp,
         h2DProfile.SetMarkerSize(1)
         h2DProfile.Draw("EPsame")
         
-    # not yet implemented
-    setTDRStyle()
-    if not plotLabel == "ForceTitle": 
+    setTDRStyle() # cosmetics
+    if not skipCmsLumi and not plotLabel == "ForceTitle":
         if lumi != None: CMS_lumi(canvas,lumi,True,False)
         else:            CMS_lumi(canvas,"",True,False)
 
     if plotLabel == "ForceTitle":
         ROOT.gStyle.SetOptTitle(1)        
-
-    #h2DPlot.GetZaxis().SetMaxDigits(1)  #for N>99, should use scientific notation, I'd like to make it work only with negative exponential but haven't succeeded yet
-    # canvas.Modified()
-    # canvas.Update()
 
     leg = ROOT.TLegend(0.39,0.75,0.89,0.95)
     leg.SetFillStyle(0)
