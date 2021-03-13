@@ -53,6 +53,12 @@ class TagManager:
             for line in f:
                 tokens = line.split()[:4]
                 x,y,z = [int(t) for t in tokens[:3]]
+                # for EB should put ieta on Y axis
+                if zToDet[z] == "EB":
+                    x,y = y,x
+                    #tmp = y
+                    #y = x
+                    #x = tmp
                 val = float(tokens[3])
                 self.detPartValues[zToDet[z]][(x,y,z)] = val
                 self.detPartMap[zToDet[z]].Fill(x,y,val)

@@ -46,7 +46,7 @@ def getZaxisReasonableExtremesTH2(h,nSigma=3,minZtoUse=None,maxZtoUse=None):
 
 def getMinMaxHisto(h, excludeEmpty=True, sumError=True, 
                    excludeUnderflow=True, excludeOverflow=True,
-                   excludeMin=None, excludeMax=None):
+                   excludeMin=None, excludeMax=None, excludeVal=None):
     
     # Warning, fix this function, GetBinContent with TH2 is not that simple, there are the underflow and overflow in each row and column
     # must check whether bin is underflow or overflow
@@ -65,6 +65,8 @@ def getMinMaxHisto(h, excludeEmpty=True, sumError=True,
     # one might exploit excludeMin/Max to select a range depending on the distribution on the histogram bin content
     # for example, one can pass excludeMin=h.GetMean()-2*h.GetStdDev() and excludeMax=h.GetMean()+2*h.GetStdDev() so to 
     # select a range of 2 sigma around the mean
+
+    # excludeVal is a special value that must be excluded when searching for min and max (e.g. can be a value with special meaning to tag empty nbins or others) 
 
     dim = h.GetDimension()
     nbins = 0
@@ -86,6 +88,7 @@ def getMinMaxHisto(h, excludeEmpty=True, sumError=True,
         if excludeEmpty and tmpmin == 0.0: continue
         if excludeMin != None and tmpmin <= excludeMin: continue
         if excludeMax != None and tmpmax >= excludeMax: continue
+        if excludeVal != None and tmpmin == excludeVal: continue
         if firstValidBin < 0: 
             logging.debug("ibin %d:   tmpmin,tmpmax = %.2f, %.2f" % (ibin,tmpmin,tmpmax))
             firstValidBin = ibin
@@ -186,6 +189,24 @@ def getMaximumTH(h, excludeMax=None):
         raise RuntimeError("Error in getMaximumTH(): unsupported histogram's dimension (%d)" % dim)
 
     return retmax
+
+
+#########################################################################
+
+def updateMapValue(h, old, new):
+
+    dim = h.GetDimension()
+    if dim == 1:
+        for ix in range(1, h.GetNbinsX() + 1):
+            if h.GetBinContent(ix) == old:
+                h.SetBinContent(ix, new)
+
+    elif dim == 2:
+        for ix in range(1, h.GetNbinsX() + 1):
+            for iy in range(1, h.GetNbinsY() + 1):
+                if h.GetBinContent(ix, iy) == old:
+                    h.SetBinContent(ix, iy, new)
+
 
 
 #########################################################################
