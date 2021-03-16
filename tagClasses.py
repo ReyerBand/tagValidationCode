@@ -46,7 +46,7 @@ class TagManager:
     def convertTxtIntoDict(self, txtfile):
         # fo rnow assuming the format is: ieta(ix)  iphi(iy)  iz  value
         # with iz = 0 for EB
-        # other columnsare possible, but not considered for now
+        # other columns are possible, but not considered for now
         zToDet = {0 : "EB", 1 : "EEp", -1 : "EEm"}
         nProcessedLines = 0
         with open(txtfile) as f:
@@ -77,4 +77,89 @@ class TagManager:
         return self.getHistograms(selectedPart="EEp")
     def getMapEEm(self):
         return self.getHistograms(selectedPart="EEm")
+
+class PlotManager:
+    def __init__(self, h2, det, options, outdir=None):
+        self.options = options
+        self.det = det
+        if self.det not in ['EB', 'EEp', 'EEm']:
+            logging.error(" in initializeCanvas(): have to specify detPart in ['EB', 'EEp', 'EEm']")
+            quit()
+        self.map2D = h2
+        self.canvas = None
+        self.canvas_1D = None
+        self.initializeCanvas()
+        self.minval = None
+        self.maxval = None
+        self.setMinMax()
+        self.map1D = None
+        self.outdir = outdir if outdir != None else "./plots_%s/" % self.det 
+        self.setDistribution1D()
+
+    def initializeCanvas(self):        
+        if self.det == "EB":
+            xsizeCanvas = int(1200)
+            ysizeCanvas = int(xsizeCanvas * 171. / 360. + 0.1 * xsizeCanvas)
+        else:
+            xsizeCanvas = int(900)
+            ysizeCanvas = int(800)
+        self.canvas = ROOT.TCanvas("c%s" % self.det, "", xsizeCanvas, ysizeCanvas)
+        self.canvas_1D = ROOT.TCanvas("c%s_1D" % self.det, "", 800, 800)
+
+    def getDet(self):
+        return self.det
+    def getMap(self):
+        return self.map2D
+    def getMap1D(self):
+        return self.map1D
+    def getOutdir(self):
+        return self.outdir
+
+    def setOutdir(self, outdir):
+        self.outdir = outdir
+        
+    def setMinMax(self):
+        # for EB might also use skipYbin=[86] to skip ieta=0, which is bin 86, but skipSpecialVal 
+        # also allows to remove dead crystals, assuming they had a special value in the input txt file 
+        minz,maxz = getMinMaxHisto(self.map2D, excludeEmpty=True, sumError=False, excludeVal=self.options.setSpecial[1] if self.options.setSpecial else None) 
+        self.minval = minz
+        self.maxval = maxz
+
+    def setDistribution1D(self):
+        # 1.01* maxz because otherwise the upper edge value would be associated to overflow bin and not shown in the plot
+        self.map1D = getTH1fromTH2(self.map2D, "map%s_distribution" % self.det, 
+                                   101, self.minval, self.maxval*1.01, 
+                                   skipSpecialVal=self.options.setSpecial[1])
+
+    def makePlots(self):
+        createPlotDirAndCopyPhp(self.outdir)
+        self.canvas.cd()
+        if self.det == "EB":
+            xaxisName = "iphi"
+            yaxisName = "ieta"
+        else:
+            xaxisName = "iX"
+            yaxisName = "iY"
+        drawTH2(self.map2D, xaxisName, yaxisName, "value in tag::%s,%s" % (self.minval, self.maxval),
+                canvasName=self.map2D.GetName(), outdir=self.outdir,
+                leftMargin=0.08, rightMargin=0.16,
+                nContours=101, palette=self.options.palette, 
+                passCanvas=self.canvas, drawOption="COLZ0")
+
+        self.canvas_1D.cd()
+        drawTH1(self.map1D, "value in tag", "Number of elements", outdir=self.outdir, 
+                canvasName=self.map1D.GetName(),
+                passCanvas=self.canvas_1D, drawStatBox=True, draw_both0_noLog1_onlyLog2=0)
+
+
+    def printSummary(self):
+            print("-"*30)
+            print("%s summary" % self.det)
+            print("-"*30)
+            print("entries  : {: <20} ".format(self.map1D.GetEntries()))
+            print("min      : {: <20} ".format(self.minval))
+            print("max      : {: <20} ".format(self.maxval))
+            print("average  : {: <20} ".format(self.map1D.GetMean(1)))
+            print("std.dev. : {: <20} ".format(self.map1D.GetStdDev(1)))
+            print("-"*30)
 

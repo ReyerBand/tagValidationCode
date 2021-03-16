@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from array import array
-from shutil import copyfile
+import shutil
 
 from CMS_lumi import *
     
@@ -223,10 +223,13 @@ def fillTH2fromTH3zrange(h2, h3, zbinLow=1, zbinHigh=1):
 
 
 def createPlotDirAndCopyPhp(outdir):
-    if outdir != "./":
-        if not os.path.exists(outdir):
-            os.system("mkdir -p "+outdir)
-            if os.path.exists("/afs/cern.ch"): os.system("cp /afs/cern.ch/user/m/mciprian/public/index.php "+outdir)
+  
+    if not os.path.exists(outdir):
+        logging.info(f"Creating output folder {outdir}")
+        os.makedirs(outdir)
+        htmlpath = "./plotUtils/index.php"
+        shutil.copy(htmlpath, outdir)
+
     
 
 #########################################################################
@@ -272,6 +275,20 @@ def adjustSettings_CMS_lumi():
 
 #########################################################################
 
+def getTH1fromTH2(h2, name, nbins=101, vmin=-5, vmax=5, skipXbin=[], skipYbin=[], skipSpecialVal=None):
+    h1 = ROOT.TH1D(name,"",nbins,vmin,vmax)
+    for bx in range(1,1+h2.GetNbinsX()):
+        if bx in skipXbin: continue
+        for by in range(1,1+h2.GetNbinsY()):
+            if by in skipYbin: continue
+            if skipSpecialVal != None and h2.GetBinContent(bx,by) == skipSpecialVal: continue
+            h1.Fill(h2.GetBinContent(bx,by))
+    return h1
+
+#########################################################################
+
+
+
 def drawTH1(htmp,
             labelXtmp="xaxis",
             labelYtmp="Events",
@@ -279,9 +296,11 @@ def drawTH1(htmp,
             canvasName = "",
             canvasSize="700,625",
             passCanvas=None, # better to pass canvas from outside to avoid memory leakage and annoying warnings
+            leftMargin=0.16,
             moreTextLatex="",
             skipTdrStyle=False,
-            drawStatBox=False
+            drawStatBox=False,
+            draw_both0_noLog1_onlyLog2=1,
             ):
 
     # moreTextLatex is used to pass some TLatex text to print on canvas, as "text1;text2::x1,y1,ypass,textsize",
@@ -301,7 +320,7 @@ def drawTH1(htmp,
     canvas.SetTickx(1)
     canvas.SetTicky(1)
     canvas.cd()
-    canvas.SetLeftMargin(0.12)
+    canvas.SetLeftMargin(leftMargin)
     canvas.SetRightMargin(0.04)
     canvas.cd()
 
@@ -312,7 +331,7 @@ def drawTH1(htmp,
     h.GetXaxis().SetTitleSize(0.05)
     h.GetXaxis().SetLabelSize(0.04)
     h.GetYaxis().SetTitle(labelY)
-    h.GetYaxis().SetTitleOffset(1.15)
+    h.GetYaxis().SetTitleOffset(1.5)
     h.GetYaxis().SetTitleSize(0.05)
     h.GetYaxis().SetLabelSize(0.04)
     if (setXAxisRangeFromUser): h.GetXaxis().SetRangeUser(xmin,xmax)
@@ -341,8 +360,15 @@ def drawTH1(htmp,
         for itx,tx in enumerate(realtext.split(";")):
             lat.DrawLatex(x1,y1-itx*ypass,tx)
 
-    for ext in ["png","pdf"]:
-        canvas.SaveAs(outdir + "{cname}.{ext}".format(canvasName,ext=ext))
+    if draw_both0_noLog1_onlyLog2 != 2:
+        for ext in ['png', 'pdf']:
+            canvas.SaveAs("{od}/{cname}.{ext}".format(od=outdir,cname=canvasName,ext=ext))
+        
+    if draw_both0_noLog1_onlyLog2 != 1:
+        canvas.SetLogy()
+        for ext in ['png', 'pdf']:
+            canvas.SaveAs("{od}/{cname}_logY.{ext}".format(od=outdir,cname=canvasName,ext=ext))
+        canvas.SetLogy(0)
 
 
 

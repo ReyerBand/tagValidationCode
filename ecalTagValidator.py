@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
  
 from commonImport import *
-from tagClasses import TagManager
+from tagClasses import TagManager, PlotManager
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -26,17 +26,14 @@ if __name__ == "__main__":
 
     fname = args.inputfile[0]
     outdir = args.outdir[0] + "/"
-    if outdir and not os.path.exists(outdir):
-        logging.info(f"Creating output folder {outdir}")
-        os.makedirs(outdir)
-        htmlpath = "./plotUtils/index.php"
-        shutil.copy(htmlpath, outdir)
+    createPlotDirAndCopyPhp(outdir)
 
     tgVal = TagManager(args)
 
+    # all the following might go into another function or class, which should receive tgVal and args
     mapEB = tgVal.getMapEB()
     mapEEp = tgVal.getMapEEp()
-    mapEEm = tgVal.getMapEEp()
+    mapEEm = tgVal.getMapEEm()
     if args.setSpecial:        
         oldval = args.setSpecial[0]
         newval = args.setSpecial[1]
@@ -46,28 +43,16 @@ if __name__ == "__main__":
         updateMapValue(mapEEm, oldval, newval)
 
     adjustSettings_CMS_lumi() # just a dummy function to fix some settings in canvas later on
-    xsizeCanvas_EB = int(1200)
-    ysizeCanvas_EB = int(xsizeCanvas_EB * 171. / 360. + 0.1 * xsizeCanvas_EB)
-    cEB = ROOT.TCanvas("cEB", "", xsizeCanvas_EB, ysizeCanvas_EB) 
-    xsizeCanvas_EE = int(900)
-    ysizeCanvas_EE = int(800)
-    cEE = ROOT.TCanvas("cEE", "", xsizeCanvas_EE, ysizeCanvas_EE) 
 
-    cEB.cd()
-    minz,maxz = getMinMaxHisto(mapEB, excludeEmpty=True, sumError=False, excludeVal=args.setSpecial[1] if args.setSpecial else None)
-    drawTH2(mapEB, "iphi", "ieta", "value in tag::%s,%s" % (minz,maxz),
-            canvasName="mapEB", outdir=outdir,
-            leftMargin=0.08, rightMargin=0.16,
-            nContours=101, palette=args.palette, passCanvas=cEB, drawOption="COLZ0")
+    plotEB  = PlotManager(mapEB,   "EB",  args, outdir=outdir)
+    plotEB.makePlots()
+    plotEB.printSummary()
 
-    cEE.cd()
-    minz,maxz = getMinMaxHisto(mapEEp, excludeEmpty=True, sumError=False, excludeVal=args.setSpecial[1] if args.setSpecial else None)
-    drawTH2(mapEEp, "iX", "iY", "value in tag::%s,%s" % (minz,maxz),
-            canvasName="mapEEp", outdir=outdir,
-            leftMargin=0.12, rightMargin=0.18,
-            nContours=101, palette=args.palette, passCanvas=cEE, drawOption="COLZ0")
-    minz,maxz = getMinMaxHisto(mapEEm, excludeEmpty=True, sumError=False, excludeVal=args.setSpecial[1] if args.setSpecial else None)
-    drawTH2(mapEEm, "iX", "iY", "value in tag::%s,%s" % (minz,maxz),
-            canvasName="mapEEm", outdir=outdir,
-            leftMargin=0.12, rightMargin=0.18,
-            nContours=101, palette=args.palette, passCanvas=cEE, drawOption="COLZ0")
+    plotEEp = PlotManager(mapEEp,  "EEp", args, outdir=outdir)
+    plotEEp.makePlots()
+    plotEEp.printSummary()
+
+    plotEEm = PlotManager(mapEEm, "EEm", args, outdir=outdir)
+    plotEEm.makePlots()
+    plotEEm.printSummary()
+
