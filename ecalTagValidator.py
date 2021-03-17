@@ -11,8 +11,9 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--tagName",    type=str, default="", help="Tag name")
     parser.add_argument("-g", "--idGranularity", type=str, choices=["crystal", "tower"], default="crystal", help="Granularity for the content of the tag object")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2,3,4], default=3, help="Verbose mode")
-    parser.add_argument("--setSpecial", type=float, nargs=2, default=None, help="Set the values for special bins to this value. Ffirst argument is used to specify which value corresponds to a spacial bin (e.g. it could be an empty one), second one is the new thresholds)")
+    parser.add_argument("--setSpecial", type=float, nargs=2, default=None, help="Set the values for special bins to this value. First argument is used to specify which value corresponds to a spacial bin (e.g. it could be an empty one), second one is the new thresholds)")
     parser.add_argument("-p", "--palette", type=int, default=55, help="Palette for 2D maps")
+    parser.add_argument("--ref", "--reference", dest="reference", type=str, default="", help="Pass another file that will be used as a reference to make ratios and other comparisons")
     # add other actions
     args = parser.parse_args()
 
@@ -28,10 +29,9 @@ if __name__ == "__main__":
     outdir = args.outdir[0] + "/"
     createPlotDirAndCopyPhp(outdir)
 
-    tgVal = TagManager(args)
+    tgVal = TagManager(args.inputfile[0], args)
 
-    # all the following might go into another function or class, which should receive tgVal and args
-    mapEB = tgVal.getMapEB()
+    mapEB  = tgVal.getMapEB()
     mapEEp = tgVal.getMapEEp()
     mapEEm = tgVal.getMapEEm()
     if args.setSpecial:        
@@ -56,3 +56,37 @@ if __name__ == "__main__":
     plotEEm.makePlots()
     plotEEm.printSummary()
 
+    if args.reference != "":
+
+        tgValRef = TagManager(args.reference, args)
+        refMapEB  = tgValRef.getMapEB()
+        refMapEEp = tgValRef.getMapEEp()
+        refMapEEm = tgValRef.getMapEEm()
+        if args.setSpecial:        
+            oldval = args.setSpecial[0]
+            newval = args.setSpecial[1]
+            logging.info(f"setting reference map values from {oldval} to {newval}")
+            updateMapValue(refMapEB, oldval, newval)
+            updateMapValue(refMapEEp, oldval, newval)
+            updateMapValue(refMapEEm, oldval, newval)
+        ratioMapEB = makeHistogramRatio(mapEB, refMapEB, "ratioEB_overRef", 
+                                        valForNullDen=1, valToKeepFromDen=None)
+        ratioMapEEp = makeHistogramRatio(mapEEp, refMapEEp, "ratioEEp_overRef", 
+                                         valForNullDen=1, valToKeepFromDen=None)
+        ratioMapEEm = makeHistogramRatio(mapEEm, refMapEEm, "ratioEEm_overRef", 
+                                         valForNullDen=1, valToKeepFromDen=None)
+
+        outdirRatio = outdir + "ratioWithRef/"
+        createPlotDirAndCopyPhp(outdirRatio)
+
+        plotEB  = PlotManager(ratioMapEB,   "EB",  args, outdir=outdirRatio)
+        plotEB.makePlots()
+        plotEB.printSummary(text="ratio with reference map")
+
+        plotEEp = PlotManager(ratioMapEEp,  "EEp", args, outdir=outdirRatio)
+        plotEEp.makePlots()
+        plotEEp.printSummary(text="ratio with reference map")
+
+        plotEEm = PlotManager(ratioMapEEm, "EEm", args, outdir=outdirRatio)
+        plotEEm.makePlots()
+        plotEEm.printSummary(text="ratio with reference map")

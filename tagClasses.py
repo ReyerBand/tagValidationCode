@@ -3,16 +3,16 @@
 from commonImport import *
 
 class TagManager:
-    def __init__(self,options):
+    def __init__(self, inputfile, options):
         self.options = options
         self.tagname = self.options.tagName
         self.recordname = self.options.recordName
-        self.filename   = self.options.inputfile[0] 
+        self.filename   = inputfile 
         self.idGranularity = self.options.idGranularity
 
         self.detPartValues = {"EB"  : {},
-                             "EEp" : {},
-                             "EEm" : {}
+                              "EEp" : {},
+                              "EEm" : {}
                        }  
         self.detPartMap = {"EB"  : None,  # eta(y-axis) vs phi(x-axis)
                            "EEp" : None,
@@ -87,14 +87,14 @@ class PlotManager:
             quit()
         self.map2D = h2
         self.canvas = None
+        self.map1D = None
         self.canvas_1D = None
         self.initializeCanvas()
         self.minval = None
         self.maxval = None
         self.setMinMax()
-        self.map1D = None
+        #self.setDistribution1D() # already called inside self.setMinMax if self.map1D == None
         self.outdir = outdir if outdir != None else "./plots_%s/" % self.det 
-        self.setDistribution1D()
 
     def initializeCanvas(self):        
         if self.det == "EB":
@@ -118,17 +118,23 @@ class PlotManager:
     def setOutdir(self, outdir):
         self.outdir = outdir
         
-    def setMinMax(self):
-        # for EB might also use skipYbin=[86] to skip ieta=0, which is bin 86, but skipSpecialVal 
-        # also allows to remove dead crystals, assuming they had a special value in the input txt file 
-        minz,maxz = getMinMaxHisto(self.map2D, excludeEmpty=True, sumError=False, excludeVal=self.options.setSpecial[1] if self.options.setSpecial else None) 
-        self.minval = minz
-        self.maxval = maxz
+    def setMinMax(self, mymin=None, mymax=None, reset1D=False):
+        if mymin != None and mymax != None:
+            self.minval = mymin
+            self.maxval = mymax
+        else:
+            # for EB might also use skipYbin=[86] to skip ieta=0, which is bin 86, but skipSpecialVal 
+            # also allows to remove dead crystals, assuming they had a special value in the input txt file 
+            minz,maxz = getMinMaxHisto(self.map2D, excludeEmpty=True, sumError=False, excludeVal=self.options.setSpecial[1] if self.options.setSpecial else None) 
+            self.minval = minz if mymin == None else mymin
+            self.maxval = maxz if mymax == None else mymax
+        if self.map1D == None or reset1D:
+            self.setDistribution1D() 
 
-    def setDistribution1D(self):
+    def setDistribution1D(self, nbins=101, minValOffset=1.0, maxValOffset=1.01):
         # 1.01* maxz because otherwise the upper edge value would be associated to overflow bin and not shown in the plot
         self.map1D = getTH1fromTH2(self.map2D, "map%s_distribution" % self.det, 
-                                   101, self.minval, self.maxval*1.01, 
+                                   nbins, minValOffset*self.minval, maxValOffset*self.maxval, 
                                    skipSpecialVal=self.options.setSpecial[1])
 
     def makePlots(self):
@@ -152,9 +158,11 @@ class PlotManager:
                 passCanvas=self.canvas_1D, drawStatBox=True, draw_both0_noLog1_onlyLog2=0)
 
 
-    def printSummary(self):
+    def printSummary(self, text=None):
             print("-"*30)
             print("%s summary" % self.det)
+            if text:
+                print("%s" % text)
             print("-"*30)
             print("entries  : {: <20} ".format(self.map1D.GetEntries()))
             print("min      : {: <20} ".format(self.minval))

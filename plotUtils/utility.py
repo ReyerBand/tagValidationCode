@@ -234,6 +234,50 @@ def createPlotDirAndCopyPhp(outdir):
 
 #########################################################################
 
+def makeHistogramRatio(hnum, hden, ratioName="ratio", valForNullDen=1, valToKeepFromDen=None):
+
+    # valToKeep is a special value from denominator histogram that should be maintained in the ratio
+    # because it may signal something particular happening (like a bad crystal or such)
+
+    ratio = hnum.Clone(ratioName)
+    ratio.Reset("ICESM")
+
+    dim = ratio.GetDimension()
+    if dim == 1:
+        for ix in range(1, hnum.GetNbinsX() + 1):
+            den = hden.GetBinContent(ix)
+            if valToKeepFromDen != None and den == valToKeepFromDen:
+                ratio.SetBinContent(ix, valToKeepFromDen)
+                continue
+            if den == 0:
+                if num != 0:
+                    logging.info(" in makeHistogramRatio(): found division by 0 in one bin, thus setting ratio to %s" % valForNullDen)
+                    ratio.SetBinContent(ix, valForNullDen)
+                else:
+                    ratio.SetBinContent(ix, 1.0)
+            else:
+                ratio.SetBinContent(ix, hnum.GetBinContent(ix)/den)
+
+    elif dim == 2:
+        for ix in range(1, hnum.GetNbinsX() + 1):
+            for iy in range(1, hnum.GetNbinsY() + 1):
+                den = hden.GetBinContent(ix, iy)
+                if valToKeepFromDen != None and den == valToKeepFromDen:
+                    ratio.SetBinContent(ix, iy, valToKeepFromDen)
+                    continue
+                if den == 0:
+                    if num != 0:
+                        logging.info(" in makeHistogramRatio(): found division by 0 in one bin, thus setting ratio to %s" % valForNullDen)
+                        ratio.SetBinContent(ix, iy, valForNullDen)
+                    else:
+                        ratio.SetBinContent(ix, iy, 1.0)
+                else:
+                    ratio.SetBinContent(ix, iy, hnum.GetBinContent(ix, iy)/den)
+
+    return ratio
+
+#########################################################################    
+
 def getAxisRangeFromUser(axisNameTmp="", 
                          separator="::", 
                          rangeSeparator=","
