@@ -112,12 +112,30 @@ class PlotManager:
         return self.map2D
     def getMap1D(self):
         return self.map1D
+    def getMax(self):
+        return self.maxval
+    def getMin(self):
+        return self.minval
+    def getMinMax(self):
+        return (self.minval, self.maxval)
     def getOutdir(self):
         return self.outdir
 
     def setOutdir(self, outdir):
         self.outdir = outdir
         
+    def centerZaxisAround1(self):
+        # generally useful only for ratios, to have 1 in the middle of the axis
+        # which might show as white depending on the palette
+        if self.minval == None or self.maxval == None:
+            self.setMinMax(mymin=self.minval, mymax=self.maxval)
+        maxdiff = max(abs(self.maxval)-1.0, abs(self.minval)-1.0)
+        self.minval = 1.0 - maxdiff
+        self.maxval = 1.0 + maxdiff
+        # the drawing function in self.makePlots() already uses self.minval and self.maxval to set the axis
+        # but let's set it here as well in case one doesn't use that one for plots
+        self.map2D.GetZaxis().SetRangeUser(self.minval, self.maxval)
+
     def setMinMax(self, mymin=None, mymax=None, reset1D=False):
         if mymin != None and mymax != None:
             self.minval = mymin
@@ -137,7 +155,7 @@ class PlotManager:
                                    nbins, minValOffset*self.minval, maxValOffset*self.maxval, 
                                    skipSpecialVal=self.options.setSpecial[1])
 
-    def makePlots(self):
+    def makePlots(self, centerZaxisAt1=False, palette=None):
         createPlotDirAndCopyPhp(self.outdir)
         self.canvas.cd()
         if self.det == "EB":
@@ -146,10 +164,12 @@ class PlotManager:
         else:
             xaxisName = "iX"
             yaxisName = "iY"
+        if centerZaxisAt1:
+            self.centerZaxisAround1()
         drawTH2(self.map2D, xaxisName, yaxisName, "value in tag::%s,%s" % (self.minval, self.maxval),
                 canvasName=self.map2D.GetName(), outdir=self.outdir,
                 leftMargin=0.08, rightMargin=0.16,
-                nContours=101, palette=self.options.palette, 
+                nContours=101, palette=palette if palette != None else self.options.palette, 
                 passCanvas=self.canvas, drawOption="COLZ0")
 
         self.canvas_1D.cd()

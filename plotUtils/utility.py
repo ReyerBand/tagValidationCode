@@ -463,14 +463,22 @@ def drawTH2(h2D_tmp,
     else:
         h2D = h2D_tmp
 
+    # light blue to light orange from bottom to top
+    # ROOT.TColor.CreateGradientColorTable(3,
+    #                                      array ("d", [0.00, 0.50, 1.00]),
+    #                                      array ("d", [0.00, 1.00, 1.00]),
+    #                                      array ("d", [0.34, 1.00, 0.65]),
+    #                                      array ("d", [0.82, 1.00, 0.00]),
+    #                                      255,  0.95)
+
     ROOT.TColor.CreateGradientColorTable(3,
                                          array ("d", [0.00, 0.50, 1.00]),
                                          ##array ("d", [1.00, 1.00, 0.00]),        
                                          ##array ("d", [0.70, 1.00, 0.34]),        
                                          ##array ("d", [0.00, 1.00, 0.82]),        
                                          array ("d", [0.00, 1.00, 1.00]),
-                                         array ("d", [0.34, 1.00, 0.65]),
-                                         array ("d", [0.82, 1.00, 0.00]),
+                                         array ("d", [0.00, 1.00, 0.00]),
+                                         array ("d", [1.00, 1.00, 0.00]),
                                          255,  0.95)
 
     if palette > 0: ROOT.gStyle.SetPalette(palette)  # 55:raibow palette ; 57: kBird (blue to yellow, default) ; 107 kVisibleSpectrum ; 77 kDarkRainBow 

@@ -80,7 +80,7 @@ if __name__ == "__main__":
         createPlotDirAndCopyPhp(outdirRatio)
 
         plotEB  = PlotManager(ratioMapEB,   "EB",  args, outdir=outdirRatio)
-        plotEB.makePlots()
+        plotEB.makePlots(centerZaxisAt1=True, palette=-1)
         plotEB.printSummary(text="ratio with reference map")
 
         plotEEp = PlotManager(ratioMapEEp,  "EEp", args, outdir=outdirRatio)
