@@ -12,6 +12,8 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--idGranularity", type=str, choices=["crystal", "tower"], default="crystal", help="Granularity for the content of the tag object")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2,3,4], default=3, help="Verbose mode")
     parser.add_argument("--setSpecial", type=float, nargs=2, default=None, help="Set the values for special bins to this value. First argument is used to specify which value corresponds to a spacial bin (e.g. it could be an empty one), second one is the new thresholds)")
+    parser.add_argument("--setMapRangeEB", type=float, nargs=2, default=(0, -1), help="Range for 2D map in EB (if min > max, the default range is used)")
+    parser.add_argument("--setMapRangeEE", type=float, nargs=2, default=(0, -1), help="Range for 2D map in EE (if min > max, the default range is used)")
     parser.add_argument("-p", "--palette", type=int, default=55, help="Palette for 2D maps")
     parser.add_argument("--ref", "--reference", dest="reference", type=str, default="", help="Pass another file that will be used as a reference to make ratios and other comparisons")
     # add other actions
@@ -45,14 +47,20 @@ if __name__ == "__main__":
     adjustSettings_CMS_lumi() # just a dummy function to fix some settings in canvas later on
 
     plotEB  = PlotManager(mapEB,   "EB",  args, outdir=outdir)
+    if args.setMapRangeEB[0] < args.setMapRangeEB[1]:
+        plotEB.setMinMax(args.setMapRangeEB[0], args.setMapRangeEB[1])
     plotEB.makePlots()
     plotEB.printSummary()
 
     plotEEp = PlotManager(mapEEp,  "EEp", args, outdir=outdir)
+    if args.setMapRangeEE[0] < args.setMapRangeEE[1]:
+        plotEB.setMinMax(args.setMapRangeEE[0], args.setMapRangeEE[1])
     plotEEp.makePlots()
     plotEEp.printSummary()
 
     plotEEm = PlotManager(mapEEm, "EEm", args, outdir=outdir)
+    if args.setMapRangeEE[0] < args.setMapRangeEE[1]:
+        plotEB.setMinMax(args.setMapRangeEE[0], args.setMapRangeEE[1])
     plotEEm.makePlots()
     plotEEm.printSummary()
 

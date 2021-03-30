@@ -153,7 +153,7 @@ class PlotManager:
         # 1.01* maxz because otherwise the upper edge value would be associated to overflow bin and not shown in the plot
         self.map1D = getTH1fromTH2(self.map2D, "map%s_distribution" % self.det, 
                                    nbins, minValOffset*self.minval, maxValOffset*self.maxval, 
-                                   skipSpecialVal=self.options.setSpecial[1])
+                                   skipSpecialVal=self.options.setSpecial[1] if self.options.setSpecial else None)
 
     def makePlots(self, centerZaxisAt1=False, palette=None):
         createPlotDirAndCopyPhp(self.outdir)

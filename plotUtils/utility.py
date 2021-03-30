@@ -250,7 +250,7 @@ def makeHistogramRatio(hnum, hden, ratioName="ratio", valForNullDen=1, valToKeep
                 ratio.SetBinContent(ix, valToKeepFromDen)
                 continue
             if den == 0:
-                if num != 0:
+                if hnum.GetBinContent(ix) != 0:
                     logging.info(" in makeHistogramRatio(): found division by 0 in one bin, thus setting ratio to %s" % valForNullDen)
                     ratio.SetBinContent(ix, valForNullDen)
                 else:
@@ -266,7 +266,7 @@ def makeHistogramRatio(hnum, hden, ratioName="ratio", valForNullDen=1, valToKeep
                     ratio.SetBinContent(ix, iy, valToKeepFromDen)
                     continue
                 if den == 0:
-                    if num != 0:
+                    if hnum.GetBinContent(ix, iy) != 0:
                         logging.info(" in makeHistogramRatio(): found division by 0 in one bin, thus setting ratio to %s" % valForNullDen)
                         ratio.SetBinContent(ix, iy, valForNullDen)
                     else:
